@@ -28,21 +28,21 @@ class Program
     {
         Console.WriteLine("Provide path to the folder with .rvt files:");
         
-        string? inputDirectory = Console.ReadLine();
-        while (string.IsNullOrWhiteSpace(inputDirectory) || !Directory.Exists(inputDirectory))
+        string? inputDir = Console.ReadLine();
+        while (string.IsNullOrWhiteSpace(inputDir) || !Directory.Exists(inputDir))
         {
             Console.WriteLine("Path is invalid.");
-            inputDirectory = Console.ReadLine();
+            inputDir = Console.ReadLine();
         }
-        return inputDirectory;
+        return inputDir;
     }
     
     /// <summary>
     /// Creates journal script to export partition history of provided RVT files
     /// </summary>
-    /// <param name="inputDirectory">Directory that contains RVT files</param>
+    /// <param name="inputDir">Directory that contains RVT files</param>
     /// <returns>Path to the resulting Journal Script</returns>
-    private static TempDirectory CreateJournalScript(string inputDirectory)
+    private static TempDirectory CreateJournalScript(string inputDir)
     {
         const string header = """
                               ' 
@@ -57,9 +57,9 @@ class Program
 
         TempDirectory tempDir = new();
         
-        IEnumerable<string> fileScripts = Directory.EnumerateFiles(inputDirectory, "*.rvt", SearchOption.AllDirectories)
+        IEnumerable<string> fileScripts = Directory.EnumerateFiles(inputDir, "*.rvt", SearchOption.AllDirectories)
             .Where(File.Exists)
-            .Where(f => System.IO.Path.GetExtension(f) == ".rvt")
+            .Where(f => Path.GetExtension(f) == ".rvt")
             .Select(f => new RevitFile(f, tempDir.ReportsDirectory))
             .Select(rF => rF.Script);
         
@@ -104,6 +104,7 @@ class Program
     /// Print out results to csv file
     /// </summary>
     /// <param name="reports">Collection of reports to read data from</param>
+    /// <param name="csvPath">Path to the resulting csv</param>
     private static void PrintResult(IEnumerable<Report> reports, string csvPath)
     {
         StringBuilder sb = new();

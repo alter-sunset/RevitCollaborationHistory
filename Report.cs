@@ -18,16 +18,16 @@ public class Report
             .Skip(1)
             .FirstOrDefault();
         
-        string[]? parts = secondLine?.Split('\t');
+        string[]? columns = secondLine?.Split('\t');
 
-        if (parts is null || parts.Length < 3) return;
+        if (columns is null || columns.Length < 3) return;
         
         TimeStamp = DateTime.ParseExact(
-            parts[0],
+            columns[0],
             "dd/MM/yyyy HH:mm:ss",
             CultureInfo.InvariantCulture);
 
-        UserName = parts[1];
-        Comment = parts[2];
+        UserName = columns[1];
+        Comment = columns[2];
     }
 }

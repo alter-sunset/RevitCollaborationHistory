@@ -2,14 +2,13 @@ namespace RevitCollaborationHistory;
 
 public class RevitFile(string filePath, string outputDirectory)
 {
-    private const string Txt = ".txt";
     private string FilePath { get; } = filePath;
     private string OutputDirectory { get; } = outputDirectory;
 
     private string FileName => Path.GetFileName(FilePath);
     private string FileNameWithoutExtension => Path.GetFileNameWithoutExtension(FilePath);
 
-    private string ReportName => $"{FileNameWithoutExtension}{Txt}";
+    private string ReportName => $"{FileNameWithoutExtension}.txt";
     private string ReportPath => Path.Combine(OutputDirectory, ReportName);
 
     public string Script => $"""

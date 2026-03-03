@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace RevitCollaborationHistory;
@@ -87,7 +91,7 @@ class Program
     /// <param name="tempDir">TempDirectory that contains Journal Script and Reports folder</param>
     private static IEnumerable<Report> GetReports(TempDirectory tempDir)
     {
-        const string revitExePath = @"C:\Program Files\Autodesk\Revit 2023\Revit.exe";
+        const string revitExePath = @"C:\Program Files\Autodesk\Revit 2022\Revit.exe";
 
         ProcessStartInfo startInfo = new()
         {

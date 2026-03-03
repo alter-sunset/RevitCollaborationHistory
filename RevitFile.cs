@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace RevitCollaborationHistory;
 
 public class RevitFile(string filePath, string outputDirectory)

@@ -1,8 +1,18 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+
 namespace RevitCollaborationHistory;
 
 public class TempDirectory : IDisposable
 {
-    public string Path { get; } = Directory.CreateTempSubdirectory().FullName;
+    public TempDirectory()
+    {
+        string tempDir = System.IO.Path.GetTempPath();
+        Path = System.IO.Path.Combine(tempDir, "RevitCollaborationHistory");
+        Directory.CreateDirectory(Path);
+    }
+    public string Path { get; }
     public string Script => System.IO.Path.Combine(Path, "script.txt");
     
     public string ReportsDirectory => System.IO.Path.Combine(Path, "Reports");

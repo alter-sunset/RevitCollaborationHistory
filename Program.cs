@@ -11,14 +11,14 @@ class Program
 {
     private static readonly string DownloadsFolderPath =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-    
-    static void Main(string[] args)
+
+    private static void Main(string[] args)
     {
         string inputDirectory = ObtainInputDirectory();
         
         using TempDirectory tempDir = CreateJournalScript(inputDirectory);
         
-        IEnumerable<Report> reports = GetReports(tempDir);
+        IEnumerable<Report> reports = GetReports(tempDir, 2023);
         string csvPath = Path.Combine(DownloadsFolderPath, $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.txt");
         
         PrintResult(reports, csvPath);
@@ -32,7 +32,7 @@ class Program
     {
         Console.WriteLine("Provide path to the folder with .rvt files:");
         
-        string? inputDir = Console.ReadLine();
+        string inputDir = Console.ReadLine();
         while (string.IsNullOrWhiteSpace(inputDir) || !Directory.Exists(inputDir))
         {
             Console.WriteLine("Path is invalid.");
@@ -75,11 +75,7 @@ class Program
         }
         sb.AppendLine(footer);
         
-        using StreamWriter writer = new(tempDir.Script);
-        writer.Write(sb.ToString());
-        writer.Close();
-        
-        // File.WriteAllText(tempDir.Script, sb.ToString());
+        File.WriteAllText(tempDir.Script, sb.ToString());
         Directory.CreateDirectory(tempDir.ReportsDirectory);
         
         return tempDir;
@@ -89,9 +85,10 @@ class Program
     /// Start Revit process with a given Journal Script
     /// </summary>
     /// <param name="tempDir">TempDirectory that contains Journal Script and Reports folder</param>
-    private static IEnumerable<Report> GetReports(TempDirectory tempDir)
+    /// <param name="version">Revit version (eg 2022)</param>
+    private static IEnumerable<Report> GetReports(TempDirectory tempDir, int version)
     {
-        const string revitExePath = @"C:\Program Files\Autodesk\Revit 2022\Revit.exe";
+        string revitExePath = @$"C:\Program Files\Autodesk\Revit {version}\Revit.exe";
 
         ProcessStartInfo startInfo = new()
         {
@@ -100,7 +97,7 @@ class Program
             UseShellExecute = false
         };
 
-        Process? process = Process.Start(startInfo);
+        Process process = Process.Start(startInfo);
 
         process?.WaitForExit();
 

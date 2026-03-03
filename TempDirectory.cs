@@ -12,7 +12,8 @@ public class TempDirectory : IDisposable
         Path = System.IO.Path.Combine(tempDir, "RevitCollaborationHistory");
         Directory.CreateDirectory(Path);
     }
-    public string Path { get; }
+
+    private string Path { get; }
     public string Script => System.IO.Path.Combine(Path, "script.txt");
     
     public string ReportsDirectory => System.IO.Path.Combine(Path, "Reports");

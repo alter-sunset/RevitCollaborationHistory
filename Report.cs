@@ -7,21 +7,21 @@ namespace RevitCollaborationHistory;
 
 public class Report
 {
-    public string FileName { get; }
-    public DateTime TimeStamp { get; }
-    public string? UserName { get; }
-    public string? Comment { get; }
+    private string FileName { get; }
+    private DateTime TimeStamp { get; }
+    private string UserName { get; }
+    private string Comment { get; }
     public string ReportLine => $"{FileName}|{TimeStamp}|{UserName}|{Comment}";
     
     public Report(string path)
     {
         FileName = Path.GetFileNameWithoutExtension(path);
         
-        string? secondLine = File.ReadLines(path)
+        string secondLine = File.ReadLines(path)
             .Skip(1)
             .FirstOrDefault();
         
-        string[]? columns = secondLine?.Split('\t');
+        string[] columns = secondLine?.Split('\t');
 
         if (columns is null || columns.Length < 3) return;
         

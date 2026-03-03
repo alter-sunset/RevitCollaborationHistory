@@ -15,7 +15,7 @@ class Program
         using TempDirectory tempDir = CreateJournalScript(inputDirectory);
         
         IEnumerable<Report> reports = GetReports(tempDir);
-        string csvPath = Path.Combine(DownloadsFolderPath, $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.csv");
+        string csvPath = Path.Combine(DownloadsFolderPath, $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.txt");
         
         PrintResult(reports, csvPath);
     }
@@ -41,7 +41,7 @@ class Program
     /// Creates journal script to export partition history of provided RVT files
     /// </summary>
     /// <param name="inputDir">Directory that contains RVT files</param>
-    /// <returns>Path to the resulting Journal Script</returns>
+    /// <returns>Path to the resulting Journal Script folder</returns>
     private static TempDirectory CreateJournalScript(string inputDir)
     {
         const string header = """
@@ -52,7 +52,7 @@ class Program
 
         const string footer = """
                               '
-                              Jrn.Command "Internal"  , " , ID_APP_EXIT"
+                              Jrn.Command "Internal"  , "Quit the application; prompts to save projects , ID_APP_EXIT"
                               """;
 
         TempDirectory tempDir = new();
@@ -71,7 +71,11 @@ class Program
         }
         sb.AppendLine(footer);
         
-        File.WriteAllText(tempDir.Script, sb.ToString());
+        using StreamWriter writer = new(tempDir.Script);
+        writer.Write(sb.ToString());
+        writer.Close();
+        
+        // File.WriteAllText(tempDir.Script, sb.ToString());
         Directory.CreateDirectory(tempDir.ReportsDirectory);
         
         return tempDir;

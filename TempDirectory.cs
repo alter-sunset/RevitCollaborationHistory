@@ -2,14 +2,21 @@ namespace RevitCollaborationHistory;
 
 public class TempDirectory : IDisposable
 {
-    public string Path { get; } = Directory.CreateTempSubdirectory().FullName;
-    public string Script => System.IO.Path.Combine(Path, "script.txt");
+    public TempDirectory()
+    {
+        string tempDir = Path.GetTempPath();
+        Dir = Path.Combine(tempDir, "RevitCollaborationHistory");
+        Directory.CreateDirectory(Dir);
+    }
+
+    private string Dir { get; }
+    public string Script => Path.Combine(Dir, "script.txt");
     
-    public string ReportsDirectory => System.IO.Path.Combine(Path, "Reports");
+    public string ReportsDirectory => Path.Combine(Dir, "Reports");
     public IEnumerable<string> Reports => Directory.EnumerateFiles(ReportsDirectory);
 
     public void Dispose()
     {
-        Directory.Delete(Path, true);
+        Directory.Delete(Dir, true);
     }
 }

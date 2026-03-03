@@ -7,15 +7,15 @@ class Program
 {
     private static readonly string DownloadsFolderPath =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-    
-    static void Main(string[] args)
+
+    private static void Main()
     {
         string inputDirectory = ObtainInputDirectory();
         
         using TempDirectory tempDir = CreateJournalScript(inputDirectory);
         
-        IEnumerable<Report> reports = GetReports(tempDir);
-        string csvPath = Path.Combine(DownloadsFolderPath, $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.csv");
+        IEnumerable<Report> reports = GetReports(tempDir, 2023);
+        string csvPath = Path.Combine(DownloadsFolderPath, $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.txt");
         
         PrintResult(reports, csvPath);
     }
@@ -28,7 +28,7 @@ class Program
     {
         Console.WriteLine("Provide path to the folder with .rvt files:");
         
-        string? inputDir = Console.ReadLine();
+        string inputDir = Console.ReadLine();
         while (string.IsNullOrWhiteSpace(inputDir) || !Directory.Exists(inputDir))
         {
             Console.WriteLine("Path is invalid.");
@@ -41,7 +41,7 @@ class Program
     /// Creates journal script to export partition history of provided RVT files
     /// </summary>
     /// <param name="inputDir">Directory that contains RVT files</param>
-    /// <returns>Path to the resulting Journal Script</returns>
+    /// <returns>Path to the resulting Journal Script folder</returns>
     private static TempDirectory CreateJournalScript(string inputDir)
     {
         const string header = """
@@ -52,7 +52,7 @@ class Program
 
         const string footer = """
                               '
-                              Jrn.Command "Internal"  , " , ID_APP_EXIT"
+                              Jrn.Command "Internal"  , "Quit the application; prompts to save projects , ID_APP_EXIT"
                               """;
 
         TempDirectory tempDir = new();
@@ -81,9 +81,10 @@ class Program
     /// Start Revit process with a given Journal Script
     /// </summary>
     /// <param name="tempDir">TempDirectory that contains Journal Script and Reports folder</param>
-    private static IEnumerable<Report> GetReports(TempDirectory tempDir)
+    /// <param name="version">Revit version (eg 2022)</param>
+    private static IEnumerable<Report> GetReports(TempDirectory tempDir, int version)
     {
-        const string revitExePath = @"C:\Program Files\Autodesk\Revit 2023\Revit.exe";
+        string revitExePath = @$"C:\Program Files\Autodesk\Revit {version}\Revit.exe";
 
         ProcessStartInfo startInfo = new()
         {
@@ -92,7 +93,7 @@ class Program
             UseShellExecute = false
         };
 
-        Process? process = Process.Start(startInfo);
+        Process process = Process.Start(startInfo);
 
         process?.WaitForExit();
 

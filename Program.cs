@@ -10,9 +10,12 @@ class Program
 
     private static void Main()
     {
-        string inputDirectory = ObtainInputDirectory();
+        string inputDir = ObtainInputDirectory();
+        IEnumerable<string> files = Directory.EnumerateFiles(inputDir, "*.rvt", SearchOption.AllDirectories)
+            .Where(File.Exists)
+            .Where(f => Path.GetExtension(f) == ".rvt");
         
-        using TempDirectory tempDir = CreateJournalScript(inputDirectory);
+        using TempDirectory tempDir = CreateJournalScript(files);
         
         IEnumerable<Report> reports = GetReports(tempDir, 2023);
         string csvPath = Path.Combine(DownloadsFolderPath, $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.txt");
@@ -40,9 +43,9 @@ class Program
     /// <summary>
     /// Creates journal script to export partition history of provided RVT files
     /// </summary>
-    /// <param name="inputDir">Directory that contains RVT files</param>
+    /// <param name="files">RVT files path</param>
     /// <returns>Path to the resulting Journal Script folder</returns>
-    private static TempDirectory CreateJournalScript(string inputDir)
+    private static TempDirectory CreateJournalScript(IEnumerable<string> files)
     {
         const string header = """
                               ' 
@@ -57,9 +60,7 @@ class Program
 
         TempDirectory tempDir = new();
         
-        IEnumerable<string> fileScripts = Directory.EnumerateFiles(inputDir, "*.rvt", SearchOption.AllDirectories)
-            .Where(File.Exists)
-            .Where(f => Path.GetExtension(f) == ".rvt")
+        IEnumerable<string> fileScripts = files
             .Select(f => new RevitFile(f, tempDir.ReportsDirectory))
             .Select(rF => rF.Script);
         
@@ -72,7 +73,6 @@ class Program
         sb.AppendLine(footer);
         
         File.WriteAllText(tempDir.Script, sb.ToString());
-        Directory.CreateDirectory(tempDir.ReportsDirectory);
         
         return tempDir;
     }

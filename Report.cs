@@ -2,12 +2,15 @@ using System.Globalization;
 
 namespace RevitCollaborationHistory;
 
+/// <summary>
+/// Class to read Revit Partition History Report
+/// </summary>
 public class Report
 {
-    private string FileName { get; }
-    private DateTime TimeStamp { get; }
-    private string UserName { get; }
-    private string Comment { get; }
+    public string FileName { get; }
+    public DateTime TimeStamp { get; }
+    public string UserName { get; }
+    public string Comment { get; }
     public string ReportLine => $"{FileName}|{TimeStamp}|{UserName}|{Comment}";
     
     public Report(string path)

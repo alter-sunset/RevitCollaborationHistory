@@ -1,6 +1,9 @@
+using System;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 
-namespace RevitCollaborationHistory;
+namespace RevitPartitionHistory;
 
 /// <summary>
 /// Class to read Revit Partition History Report and store last synchronization data

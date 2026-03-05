@@ -1,7 +1,11 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
+using RevitJournalAbuser;
 
-namespace RevitCollaborationHistory;
+namespace RevitPartitionHistory;
 
 class Program
 {
@@ -15,12 +19,16 @@ class Program
             .Where(File.Exists)
             .Where(f => Path.GetExtension(f) == ".rvt");
         
-        using TempDirectory tempDir = CreateJournalScript(files);
+        using TempDirectory tempDir = CreateTempEnvironment(files);
         
         IEnumerable<Report> reports = GetReports(tempDir, 2023);
         string csvPath = Path.Combine(DownloadsFolderPath, $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.txt");
         
         PrintResult(reports, csvPath);
+
+        Console.WriteLine("The work is done! Final report available at " + csvPath);
+        Console.WriteLine("Press Enter to exit...");
+        Console.ReadLine();
     }
 
     /// <summary>
@@ -39,40 +47,22 @@ class Program
         }
         return inputDir;
     }
-    
+
     /// <summary>
-    /// Creates journal script to export partition history of provided RVT files
+    /// Creates temp environment with journal script to export partition history of provided RVT files
     /// </summary>
     /// <param name="files">RVT files path</param>
-    /// <returns>Path to the resulting Journal Script folder</returns>
-    private static TempDirectory CreateJournalScript(IEnumerable<string> files)
+    /// <returns>Path to the resulting temp environment</returns>
+    private static TempDirectory CreateTempEnvironment(IEnumerable<string> files)
     {
-        const string header = """
-                              ' 
-                              Dim Jrn
-                              Set Jrn = CrsJournalScript
-                              """;
-
-        const string footer = """
-                              '
-                              Jrn.Command "Internal"  , "Quit the application; prompts to save projects , ID_APP_EXIT"
-                              """;
-
-        TempDirectory tempDir = new();
+        TempDirectory tempDir = new(true);
         
-        IEnumerable<string> fileScripts = files
+        string[] fileScripts = files
             .Select(f => new RevitFile(f, tempDir.ReportsDirectory))
-            .Select(rF => rF.Script);
+            .Select(rF => rF.Script)
+            .ToArray();
         
-        StringBuilder sb = new();
-        sb.AppendLine(header);
-        foreach (string fileScript in fileScripts)
-        {
-            sb.AppendLine(fileScript);
-        }
-        sb.AppendLine(footer);
-        
-        File.WriteAllText(tempDir.Script, sb.ToString());
+        using Journal journal = new(tempDir.Script, fileScripts);
         
         return tempDir;
     }
@@ -84,18 +74,9 @@ class Program
     /// <param name="version">Revit version (eg 2022)</param>
     private static IEnumerable<Report> GetReports(TempDirectory tempDir, int version)
     {
-        string revitExePath = @$"C:\Program Files\Autodesk\Revit {version}\Revit.exe";
-
-        ProcessStartInfo startInfo = new()
-        {
-            FileName = revitExePath,
-            Arguments = $"/language ENG \"{tempDir.Script}\"",
-            UseShellExecute = false
-        };
-
-        Process process = Process.Start(startInfo);
-
-        process?.WaitForExit();
+        Abuser abuser = new(version, tempDir);
+        
+        abuser.RunJournalScript();
 
         return tempDir.Reports
             .Select(r => new Report(r));

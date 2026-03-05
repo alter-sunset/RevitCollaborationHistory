@@ -1,4 +1,6 @@
-namespace RevitCollaborationHistory;
+using System.IO;
+
+namespace RevitPartitionHistory;
 
 /// <summary>
 /// Class that creates part of a Journal Script that produce Partition History Report on specified rvt file

@@ -1,5 +1,12 @@
-namespace RevitCollaborationHistory;
+using System.IO;
 
+namespace RevitPartitionHistory;
+
+/// <summary>
+/// Class that creates part of a Journal Script that produce Partition History Report on specified rvt file
+/// </summary>
+/// <param name="filePath">Path to rvt file</param>
+/// <param name="outputDirectory">Directory to put Report at</param>
 public class RevitFile(string filePath, string outputDirectory)
 {
     private string FilePath { get; } = filePath;
@@ -9,8 +16,15 @@ public class RevitFile(string filePath, string outputDirectory)
     private string FileNameWithoutExtension => Path.GetFileNameWithoutExtension(FilePath);
 
     private string ReportName => $"{FileNameWithoutExtension}.txt";
-    private string ReportPath => Path.Combine(OutputDirectory, ReportName);
+    
+    /// <summary>
+    /// Path to the resulting Report
+    /// </summary>
+    public string ReportPath => Path.Combine(OutputDirectory, ReportName);
 
+    /// <summary>
+    /// Resulting Script part
+    /// </summary>
     public string Script => $"""
                              '
                              Jrn.Command "Ribbon"  , "Show usernames, times, and comments for successive saves of a file. , ID_PARTITIONS_SHOW_HISTORY" 

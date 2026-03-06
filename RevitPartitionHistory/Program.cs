@@ -7,28 +7,24 @@ using RevitJournalAbuser;
 
 namespace RevitPartitionHistory;
 
-class Program
+internal static class Program
 {
     private static readonly string DownloadsFolderPath =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
 
     private static void Main()
     {
-        string inputDir = ObtainInputDirectory();
-        IEnumerable<string> files = Directory.EnumerateFiles(inputDir, "*.rvt", SearchOption.AllDirectories)
-            .Where(File.Exists)
-            .Where(f => Path.GetExtension(f) == ".rvt");
-        
-        using TempDirectory tempDir = CreateTempEnvironment(files);
-        
-        IEnumerable<Report> reports = GetReports(tempDir, 2023);
         string csvPath = Path.Combine(DownloadsFolderPath, $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.txt");
+        string inputDir = ObtainInputDirectory();
         
-        PrintResult(reports, csvPath);
+        IEnumerable<string> files = Directory.EnumerateFiles(inputDir, "*.rvt", SearchOption.AllDirectories);
 
-        Console.WriteLine("The work is done! Final report available at " + csvPath);
-        Console.WriteLine("Press Enter to exit...");
-        Console.ReadLine();
+        using (ReportsTempDirectory reportsTempDir = CreateTempEnvironment(files))
+        {
+            IEnumerable<Report> reports = GetReports(reportsTempDir, 2023);
+            PrintResult(reports, csvPath);
+        }
+        Finisher(csvPath);
     }
 
     /// <summary>
@@ -53,32 +49,32 @@ class Program
     /// </summary>
     /// <param name="files">RVT files path</param>
     /// <returns>Path to the resulting temp environment</returns>
-    private static TempDirectory CreateTempEnvironment(IEnumerable<string> files)
+    private static ReportsTempDirectory CreateTempEnvironment(IEnumerable<string> files)
     {
-        TempDirectory tempDir = new(true);
+        ReportsTempDirectory reportsTempDir = new();
         
         string[] fileScripts = files
-            .Select(f => new RevitFile(f, tempDir.ReportsDirectory))
-            .Select(rF => rF.Script)
+            .Select(file => file.CreatePartitionHistory(reportsTempDir.ReportsDirectory))
             .ToArray();
         
-        using Journal journal = new(tempDir.Script, fileScripts);
+        using Journal journal = new(reportsTempDir.Script, fileScripts);
         
-        return tempDir;
+        return reportsTempDir;
     }
 
     /// <summary>
     /// Start Revit process with a given Journal Script
     /// </summary>
-    /// <param name="tempDir">TempDirectory that contains Journal Script and Reports folder</param>
+    /// <param name="reportsTempDir">TempDirectory that contains Journal Script and Reports folder</param>
     /// <param name="version">Revit version (eg 2022)</param>
-    private static IEnumerable<Report> GetReports(TempDirectory tempDir, int version)
+    private static IEnumerable<Report> GetReports(ReportsTempDirectory reportsTempDir, int version)
     {
-        Abuser abuser = new(version, tempDir);
+        using Abuser abuser = new(version, reportsTempDir);
         
         abuser.RunJournalScript();
+        abuser.WaitForExit();
 
-        return tempDir.Reports
+        return reportsTempDir.Reports
             .Select(r => new Report(r));
     }
 
@@ -97,5 +93,12 @@ class Program
         }
         
         File.WriteAllText(csvPath, sb.ToString());
+    }
+
+    private static void Finisher(string csvPath)
+    {
+        Console.WriteLine("The work is done! Final report available at " + csvPath);
+        Console.WriteLine("Press Enter to exit...");
+        Console.ReadLine();
     }
 }

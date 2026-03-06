@@ -7,7 +7,7 @@ using RevitJournalAbuser;
 
 namespace RevitPartitionHistory;
 
-class Program
+internal static class Program
 {
     private static readonly string DownloadsFolderPath =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
@@ -15,20 +15,19 @@ class Program
     private static void Main()
     {
         string inputDir = ObtainInputDirectory();
-        IEnumerable<string> files = Directory.EnumerateFiles(inputDir, "*.rvt", SearchOption.AllDirectories)
+        
+        IEnumerable<string> files = Directory
+            .EnumerateFiles(inputDir, "*.rvt", SearchOption.AllDirectories)
             .Where(File.Exists)
             .Where(f => Path.GetExtension(f) == ".rvt");
         
         using TempDirectory tempDir = CreateTempEnvironment(files);
-        
         IEnumerable<Report> reports = GetReports(tempDir, 2023);
+        
         string csvPath = Path.Combine(DownloadsFolderPath, $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.txt");
         
         PrintResult(reports, csvPath);
-
-        Console.WriteLine("The work is done! Final report available at " + csvPath);
-        Console.WriteLine("Press Enter to exit...");
-        Console.ReadLine();
+        Finisher(csvPath);
     }
 
     /// <summary>
@@ -58,8 +57,7 @@ class Program
         TempDirectory tempDir = new(true);
         
         string[] fileScripts = files
-            .Select(f => new RevitFile(f, tempDir.ReportsDirectory))
-            .Select(rF => rF.Script)
+            .Select(file => file.CreatePartitionHistory(tempDir.ReportsDirectory))
             .ToArray();
         
         using Journal journal = new(tempDir.Script, fileScripts);
@@ -97,5 +95,12 @@ class Program
         }
         
         File.WriteAllText(csvPath, sb.ToString());
+    }
+
+    private static void Finisher(string csvPath)
+    {
+        Console.WriteLine("The work is done! Final report available at " + csvPath);
+        Console.WriteLine("Press Enter to exit...");
+        Console.ReadLine();
     }
 }

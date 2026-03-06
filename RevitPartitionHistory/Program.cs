@@ -17,10 +17,7 @@ internal static class Program
         string csvPath = Path.Combine(DownloadsFolderPath, $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.txt");
         string inputDir = ObtainInputDirectory();
         
-        IEnumerable<string> files = Directory
-            .EnumerateFiles(inputDir, "*.rvt", SearchOption.AllDirectories)
-            .Where(File.Exists)
-            .Where(f => Path.GetExtension(f) == ".rvt");
+        IEnumerable<string> files = Directory.EnumerateFiles(inputDir, "*.rvt", SearchOption.AllDirectories);
 
         using (ReportsTempDirectory reportsTempDir = CreateTempEnvironment(files))
         {

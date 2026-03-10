@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using RevitJournalAbuser;
 
 namespace RevitPartitionHistory;
 
@@ -19,9 +17,9 @@ internal static class Program
         
         IEnumerable<string> files = Directory.EnumerateFiles(inputDir, "*.rvt", SearchOption.AllDirectories);
 
-        using (ReportsTempDirectory reportsTempDir = CreateTempEnvironment(files))
+        using (ReportsTempDirectory reportsTempDir = new(files))
         {
-            IEnumerable<Report> reports = GetReports(reportsTempDir, 2023);
+            IEnumerable<Report> reports = reportsTempDir.GetReports(2023);
             PrintResult(reports, csvPath);
         }
         Finisher(csvPath);
@@ -42,40 +40,6 @@ internal static class Program
             inputDir = Console.ReadLine();
         }
         return inputDir;
-    }
-
-    /// <summary>
-    /// Creates temp environment with journal script to export partition history of provided RVT files
-    /// </summary>
-    /// <param name="files">RVT files path</param>
-    /// <returns>Path to the resulting temp environment</returns>
-    private static ReportsTempDirectory CreateTempEnvironment(IEnumerable<string> files)
-    {
-        ReportsTempDirectory reportsTempDir = new();
-        
-        string[] fileScripts = files
-            .Select(file => file.CreatePartitionHistory(reportsTempDir.ReportsDirectory))
-            .ToArray();
-        
-        using Journal journal = new(reportsTempDir.Script, fileScripts);
-        
-        return reportsTempDir;
-    }
-
-    /// <summary>
-    /// Start Revit process with a given Journal Script
-    /// </summary>
-    /// <param name="reportsTempDir">TempDirectory that contains Journal Script and Reports folder</param>
-    /// <param name="version">Revit version (eg 2022)</param>
-    private static IEnumerable<Report> GetReports(ReportsTempDirectory reportsTempDir, int version)
-    {
-        using Abuser abuser = new(version, reportsTempDir);
-        
-        abuser.RunJournalScript();
-        abuser.WaitForExit();
-
-        return reportsTempDir.Reports
-            .Select(r => new Report(r));
     }
 
     /// <summary>
